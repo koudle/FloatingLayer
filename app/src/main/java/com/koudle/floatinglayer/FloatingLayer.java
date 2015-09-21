@@ -3,6 +3,7 @@ package com.koudle.floatinglayer;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
+import android.opengl.GLException;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -38,8 +39,7 @@ public class FloatingLayer {
 
     private AnimationTimerTask mAnimationTask;
     private Timer mAnimationTimer;
-    private GetTokenTimerTask mGetTokenTimerTask;
-    private Timer mGetTokenTimer;
+    private GetTokenRunnable mGetTokenRunnable;
 
     private FloatingLayerListener mListener;
 
@@ -155,9 +155,8 @@ public class FloatingLayer {
     public void show(Activity activity){
 
         if(!ISSHOW){
-            mGetTokenTimer= new Timer();
-            mGetTokenTimerTask = new GetTokenTimerTask(activity);
-            mGetTokenTimer.schedule(mGetTokenTimerTask, 0, mGetTokenPeriodTime);
+            mGetTokenRunnable = new GetTokenRunnable(activity);
+            mHander.postDelayed(mGetTokenRunnable, 500);
         }
     }
 
@@ -235,47 +234,42 @@ public class FloatingLayer {
         }
     }
 
-    class GetTokenTimerTask extends TimerTask{
+    class GetTokenRunnable implements Runnable{
 
+        int count = 0;
         private Activity mActivity;
-        private int mCount = -1;
 
-        public GetTokenTimerTask(Activity activity){
+        public GetTokenRunnable(Activity activity){
             this.mActivity = activity;
         }
 
-        @Override
-        public void run() {
-            IBinder token = mActivity.getWindow().getDecorView().getWindowToken();
-            mCount ++ ;
+        @Override public void run() {
 
-            if(mCount > 9){
-                mGetTokenTimer.cancel();
-                mGetTokenTimerTask.cancel();
+            if (null == mActivity)
+                return;
+            IBinder token = null;
+            try {
+                token = mActivity.getWindow().getDecorView().getWindowToken();
+            } catch (Exception e) {
             }
 
-            if(null != token){
-                mLayoutParams.token = token;
+            if(null!=token) {
 
-                mHander.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            mWindowManager.addView(mPopView, mLayoutParams);
-                        }catch (Exception e){
-                            Log.d(TAG,e.toString());
-                        }
-
-                    }
-                });
-                ISSHOW = true;
-                if(null != mListener){
-                    mListener.onShow();
+                try {
+                    mLayoutParams.token = token;
+                    mWindowManager.addView(mPopView,
+                            mLayoutParams);
+                    mActivity = null;
+                    return;
+                } catch (Exception e) {
                 }
-
-                mGetTokenTimer.cancel();
-                mGetTokenTimerTask.cancel();
             }
+            count++;
+            mLayoutParams.token = null;
+            if(count <10 && null != mLayoutParams) {
+                mHander.postDelayed(mGetTokenRunnable, 500);
+            }
+
         }
     }
 
