@@ -1,8 +1,21 @@
 # FloatingLayer 悬浮窗
-开启悬浮窗需要申请SYSTEM_ALERT_WINDOW的权限，但是这个权限比较特殊，在Google 官方 Android6.0及以上，这个权限不能在通过代码申请方式获取，而且在小米等rom上，这个权限在4.x的时候就是默认关闭的（即使你申请了权限），需要用户手动在权限管理里开启。
-
-本应用实现的就是为了不需要权限就开启悬浮窗的功能，但是有一个限制就是只能在本应用中显示悬浮窗，当退到后台时，就无法在显示悬浮窗，即应用内悬浮窗。
+本应用实现的是为了不需要权限就开启悬浮窗的功能，但是有一个限制就是只能在本应用中显示悬浮窗，当应用退到后台时，就无法在显示悬浮窗，即应用内悬浮窗。
+## 目前存在的问题
+开启悬浮窗需要申请SYSTEM_ALERT_WINDOW的权限，但是这个权限比较特殊，在Google 官方 Android6.0及以上，这个权限不能在通过代码申请方式获取，而且在小米等rom上，这个权限在4.x的时候就是默认关闭的（即使你申请了权限），需要用户手动在权限管理里手动开启。
+## 注意
+1. 预置应用应该是可以默认使用该权限的（经验说：预置应用默认开启所需要的权限，就算在apps->permission中显示的权限默认是关闭的）。
+2. 通过Google Play Store(Version 6.05 or heigher is required)下载的需要该权限的应用，会被自动授予该权限
+参考如下:
+```
+It is a new behaviour introduced in Marshmallow 6.0.1.
+Every app that requests the SYSTEM_ALERT_WINDOW permission and that is installed through the Play Store (version 6.0.5 or higher is required), will have granted the permission automatically.
+If instead the app is sideloaded, the permission is not automatically granted. You can try to download and install the Evernote APK from apkmirror.com. As you can see you need to manually grant the permission in Settings -> Apps -> Draw over other apps.
+These are the commits [1] [2] that allow the Play Store to give the automatic grant of the SYSTEM_ALERT_WINDOW permission.
+From: SYSTEM_ALERT_WINDOW - How to get this permission automatically on Android 6.0 and targetSdkVersion 23
+```
 ## 原理
+### WindowManager
+我们通过windowmanager的addview方法来实现
 ### Android窗口机制
 Android的视图都是通过窗口来实现的，Framework定义了三种窗口类型，三种类型的定义在WindowManager类中。
 + 第一种是应用窗口。所谓的应用窗口一般是指该窗口对应一个Activity，由于加载Activity是由AmS完成的，因此对于应用程序来讲，要创建一个应用类窗口，只能在Activity内部完成。
